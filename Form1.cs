@@ -39,6 +39,7 @@ namespace VSPackageManager
 
 			try
 			{
+				_items.Clear();
 				using (var packagesKey = Registry.CurrentUser.OpenSubKey(PackagesPath))
 				{
 					var subkeyNames = packagesKey.GetSubKeyNames();
@@ -106,7 +107,11 @@ namespace VSPackageManager
 				if(
 					!string.IsNullOrWhiteSpace(textBox1.Text)
 					&&
-					!item.Text.ToLower().Contains(textBox1.Text.ToLower())
+					(
+						!item.Text.ToLower().Contains(textBox1.Text.ToLower())
+						&&
+						!item.SubItems[1].Text.ToLower().Contains(textBox1.Text.ToLower())
+					)
 					)
 					continue;
 
