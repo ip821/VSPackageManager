@@ -13,7 +13,8 @@ namespace VSPackageManager
 {
 	public partial class Form1 : Form
 	{
-		private static readonly string PackagesPath = @"Software\Microsoft\VisualStudio\12.0_Config\Packages";
+		private static readonly string VSPath = @"Software\Microsoft\VisualStudio\";
+		private static readonly string PackagesPath = @"\Packages";
 		List<ListViewItem> _items = new List<ListViewItem>();
 
 		public Form1()
@@ -24,23 +25,46 @@ namespace VSPackageManager
 		protected override void OnLoad(EventArgs e)
 		{
 			base.OnLoad(e);
-			RefreshList();
+			RefreshAll();
 		}
 
 		private void button1_Click(object sender, EventArgs e)
 		{
-			RefreshList();
+			RefreshAll();
 		}
 
-		bool _loading;
+		bool _refreshingComboBox;
+		private void RefreshAll()
+		{
+			_refreshingComboBox = true;
+
+			try
+			{
+				comboBox1.Items.Clear();
+				using (var vsKey = Registry.CurrentUser.OpenSubKey(VSPath))
+				{
+					var subkeyNames = vsKey.GetSubKeyNames();
+					comboBox1.Items.AddRange(subkeyNames.Where(t => t.Contains("Config")).ToArray());
+					comboBox1.SelectedIndex = 0;
+				}
+
+				RefreshList();
+			}
+			finally
+			{
+				_refreshingComboBox = false;
+			}
+		}
+
+		bool _refreshingList;
 		private void RefreshList()
 		{
-			_loading = true;
+			_refreshingList = true;
 
 			try
 			{
 				_items.Clear();
-				using (var packagesKey = Registry.CurrentUser.OpenSubKey(PackagesPath))
+				using (var packagesKey = Registry.CurrentUser.OpenSubKey(VSPath + comboBox1.SelectedItem + PackagesPath))
 				{
 					var subkeyNames = packagesKey.GetSubKeyNames();
 					foreach (var item in subkeyNames)
@@ -64,13 +88,13 @@ namespace VSPackageManager
 			}
 			finally
 			{
-				_loading = false;
+				_refreshingList = false;
 			}
 		}
 
 		private void ListViewItemChecked(object sender, ItemCheckedEventArgs e)
 		{
-			if (_loading)
+			if (_refreshingComboBox || _refreshingList)
 				return;
 
 			string keyName = (string)e.Item.Tag;
@@ -84,7 +108,7 @@ namespace VSPackageManager
 				newKeyName = "!" + keyName;
 			}
 
-			using (var packagesKey = Registry.CurrentUser.OpenSubKey(PackagesPath, true))
+			using (var packagesKey = Registry.CurrentUser.OpenSubKey(VSPath + comboBox1.SelectedItem + PackagesPath, true))
 			{
 				RegistryUtilities.RenameSubKey(packagesKey, keyName, newKeyName);
 				e.Item.Tag = newKeyName;
@@ -98,7 +122,7 @@ namespace VSPackageManager
 
 		private void Filter()
 		{
-			_loading = true;
+			_refreshingComboBox = true;
 			try
 			{
 			listView1.Items.Clear();
@@ -120,8 +144,13 @@ namespace VSPackageManager
 			}
 			finally
 			{
-				_loading = false;
+				_refreshingComboBox = false;
 			}
+		}
+
+		private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+		{
+			RefreshList();
 		}
 	}
 
