@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using Newtonsoft.Json;
 
 namespace VSPackageManager
 {
@@ -122,7 +124,7 @@ namespace VSPackageManager
 
 		private void Filter()
 		{
-			_refreshingComboBox = true;
+			_refreshingList = true;
 			try
 			{
 			listView1.Items.Clear();
@@ -144,7 +146,7 @@ namespace VSPackageManager
 			}
 			finally
 			{
-				_refreshingComboBox = false;
+				_refreshingList = false;
 			}
 		}
 
@@ -152,48 +154,57 @@ namespace VSPackageManager
 		{
 			RefreshList();
 		}
-	}
 
-	public static class RegistryUtilities
-	{
-		public static bool RenameSubKey(RegistryKey parentKey, string subKeyName, string newSubKeyName)
+		private void _loadButton_Click(object sender, EventArgs e)
 		{
-			CopyKey(parentKey, subKeyName, newSubKeyName);
-			parentKey.DeleteSubKeyTree(subKeyName);
-			return true;
-		}
-		public static bool CopyKey(RegistryKey parentKey, string keyNameToCopy, string newKeyName)
-		{
-			using (RegistryKey destinationKey = parentKey.CreateSubKey(newKeyName))
+			using (var dialog = new OpenFileDialog())
 			{
-				using (RegistryKey sourceKey = parentKey.OpenSubKey(keyNameToCopy))
+				dialog.Filter = "Profile files|*.vspm";
+				if (dialog.ShowDialog(this) != DialogResult.OK)
+					return;
+
+				var path = dialog.FileName;
+				using (var streamReader = new StreamReader(path))
 				{
-					RecurseCopyKey(sourceKey, destinationKey);
-				}
-			}
-			return true;
-		}
-
-		private static void RecurseCopyKey(RegistryKey sourceKey, RegistryKey destinationKey)
-		{
-			foreach (string valueName in sourceKey.GetValueNames())
-			{
-				object objValue = sourceKey.GetValue(valueName);
-				RegistryValueKind valKind = sourceKey.GetValueKind(valueName);
-				destinationKey.SetValue(valueName, objValue, valKind);
-			}
-
-			foreach (string sourceSubKeyName in sourceKey.GetSubKeyNames())
-			{
-				using (RegistryKey sourceSubKey = sourceKey.OpenSubKey(sourceSubKeyName))
-				{
-					using (RegistryKey destSubKey = destinationKey.CreateSubKey(sourceSubKeyName))
+					var data = streamReader.ReadToEnd();
+					var disabledItems = JsonConvert.DeserializeObject<List<string>>(data);
+					foreach (ListViewItem item in listView1.Items)
 					{
-						RecurseCopyKey(sourceSubKey, destSubKey);
+						if (!disabledItems.Contains((string)item.Tag))
+							continue;
+
+						item.Checked = false;
 					}
 				}
 			}
 		}
-	}
 
+		private void _saveButton_Click(object sender, EventArgs e)
+		{
+			using (var dialog = new SaveFileDialog())
+			{
+				dialog.Filter = "Profile files|*.vspm";
+				if (dialog.ShowDialog(this) != DialogResult.OK)
+					return;
+
+				var path = dialog.FileName;
+
+				var disabledItems = 
+					listView1
+					.Items
+					.Cast<ListViewItem>()
+					.Where(t => !t.Checked)
+					.Select(t => t.Tag)
+					.Cast<string>()
+					.Select(t => t.Replace("!", string.Empty))
+					.ToList();
+
+				var data = JsonConvert.SerializeObject(disabledItems);
+				using (var streamWriter = new StreamWriter(path))
+				{
+					streamWriter.Write(data);
+				}
+			}
+		}
+	}
 }

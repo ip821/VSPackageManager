@@ -36,6 +36,8 @@
 			this.textBox1 = new System.Windows.Forms.TextBox();
 			this.label2 = new System.Windows.Forms.Label();
 			this.comboBox1 = new System.Windows.Forms.ComboBox();
+			this._loadButton = new System.Windows.Forms.Button();
+			this._saveButton = new System.Windows.Forms.Button();
 			this.SuspendLayout();
 			// 
 			// listView1
@@ -113,11 +115,33 @@
 			this.comboBox1.TabIndex = 5;
 			this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
 			// 
+			// _loadButton
+			// 
+			this._loadButton.Location = new System.Drawing.Point(674, 4);
+			this._loadButton.Name = "_loadButton";
+			this._loadButton.Size = new System.Drawing.Size(75, 23);
+			this._loadButton.TabIndex = 6;
+			this._loadButton.Text = "Load...";
+			this._loadButton.UseVisualStyleBackColor = true;
+			this._loadButton.Click += new System.EventHandler(this._loadButton_Click);
+			// 
+			// _saveButton
+			// 
+			this._saveButton.Location = new System.Drawing.Point(755, 4);
+			this._saveButton.Name = "_saveButton";
+			this._saveButton.Size = new System.Drawing.Size(75, 23);
+			this._saveButton.TabIndex = 7;
+			this._saveButton.Text = "Save...";
+			this._saveButton.UseVisualStyleBackColor = true;
+			this._saveButton.Click += new System.EventHandler(this._saveButton_Click);
+			// 
 			// Form1
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(946, 555);
+			this.Controls.Add(this._saveButton);
+			this.Controls.Add(this._loadButton);
 			this.Controls.Add(this.comboBox1);
 			this.Controls.Add(this.label2);
 			this.Controls.Add(this.textBox1);
@@ -141,6 +165,8 @@
 		private System.Windows.Forms.TextBox textBox1;
 		private System.Windows.Forms.Label label2;
 		private System.Windows.Forms.ComboBox comboBox1;
+		private System.Windows.Forms.Button _loadButton;
+		private System.Windows.Forms.Button _saveButton;
 	}
 }
 
